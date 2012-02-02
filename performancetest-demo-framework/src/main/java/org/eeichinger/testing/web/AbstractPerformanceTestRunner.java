@@ -31,7 +31,7 @@ import static org.kohsuke.args4j.ExampleMode.ALL;
  * @author Erich Eichinger
  * @since 25/01/12
  */
-public abstract class AbstractPerformanceTestRunner {
+public abstract class AbstractPerformanceTestRunner<T extends Runnable> {
 
     final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -63,15 +63,15 @@ public abstract class AbstractPerformanceTestRunner {
     }
 
     protected void run() throws Exception {
-        List<BrowserSessionFactory> browserProfiles = createBrowserProfiles();
+        List<BrowserSessionFactory<T>> browserProfiles = createBrowserProfiles();
 
         usersMax = Math.max(users, usersMax);
 
-        log.info(String.format("PerformanceTestBegin{users=%s,sessions=%s,usersMax=%s,usersIncr=%s}", users, sessions,usersMax, usersIncr));
+        log.info(String.format("PerformanceTestBegin{users=%s,sessions=%s,usersMax=%s,usersIncr=%s}", users, sessions, usersMax, usersIncr));
 
         boolean hasErrors = false;
 
-        for(int usersForIteration=users;usersForIteration<=usersMax;usersForIteration+=usersIncr){
+        for(int usersForIteration=users; usersForIteration <= usersMax; usersForIteration += usersIncr){
             log.info(String.format("IterationBegin{usersForIteration=%s}", usersForIteration));
             hasErrors = hasErrors || runIteration(browserProfiles, usersForIteration);
         }
@@ -79,9 +79,9 @@ public abstract class AbstractPerformanceTestRunner {
         Assert.assertFalse("Performance Tests had errors", hasErrors);
     }
 
-    abstract protected List<BrowserSessionFactory> createBrowserProfiles();
+    abstract protected List<BrowserSessionFactory<T>> createBrowserProfiles();
 
-    private boolean runIteration(List<BrowserSessionFactory> browserProfiles, int usersForIteration) throws Exception {
+    private boolean runIteration(List<BrowserSessionFactory<T>> browserProfiles, int usersForIteration) throws Exception {
         int totalSessions = usersForIteration * sessions;
 
         ExecutorService executor = Executors.newFixedThreadPool(usersForIteration);
@@ -90,7 +90,7 @@ public abstract class AbstractPerformanceTestRunner {
 
         for(int i=0;i<totalSessions;i++) {
             // TODO: in case we have more than 1 profile, select them based on probability/distribution
-            BrowserSessionFactory profile = browserProfiles.get(0);
+            BrowserSessionFactory<T> profile = browserProfiles.get(0);
             Callable<Exception> session = new SessionResultReporter(profile.getProfileClass(), profile.newRunnable());
             sessions.add(session);
         }
@@ -107,10 +107,10 @@ public abstract class AbstractPerformanceTestRunner {
     }
 
     public class SessionResultReporter implements Callable<Exception> {
-        private final Class profileClass;
+        private final Class<T> profileClass;
         final Runnable inner;
 
-        public SessionResultReporter(Class profileClass, Runnable inner) {
+        public SessionResultReporter(Class<T> profileClass, Runnable inner) {
             this.profileClass = profileClass;
             this.inner = inner;
         }

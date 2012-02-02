@@ -6,7 +6,9 @@ package org.eeichinger.testing.web;
  */
 public class TimeoutThresholdException extends RuntimeException {
 
-    public TimeoutThresholdException(String msg) {
+	private static final long serialVersionUID = 1L;
+
+	public TimeoutThresholdException(String msg) {
         super(msg);
     }
 }
