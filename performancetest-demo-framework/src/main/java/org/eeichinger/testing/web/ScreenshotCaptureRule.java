@@ -33,7 +33,8 @@ public final class ScreenshotCaptureRule extends TestWatchman {
         this.screenshotPath = screenshotPath;
     }
 
-    public void failed(Throwable e, FrameworkMethod method) {
+    @Override
+	public void failed(Throwable e, FrameworkMethod method) {
 		String methodName = method.getMethod().getName();
 		log.error(String.format("Failure in %s.%s", method.getMethod().getDeclaringClass().getName(), methodName), e);
 		if (Settings.TAKE_ERROR_SCREENSHOTS) {
@@ -50,6 +51,11 @@ public final class ScreenshotCaptureRule extends TestWatchman {
             return;
 
         WebDriver driver = WebDriverFactory.getInstance().getCurrentWebDriver();
+        if (!(driver instanceof TakesScreenshot)) {
+            log.warn("Driver {} doesn't support screenshots - page source was:\n {}", driver.getClass().getName(), driver.getPageSource());
+            return;
+        }
+        
 		File screenshotAs;
         try {
             screenshotAs = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
